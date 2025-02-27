@@ -1,5 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameBoard extends JFrame {
     private static final int SIZE = 8; // Size of the grid (8x8 board)
@@ -15,27 +18,76 @@ public class GameBoard extends JFrame {
         // Initialize the pieces array (example values)
         initializePiecesArray();
 
+        // Shuffle the pieces array to randomize the positions
+        shufflePiecesArray();
+
         // Initialize the board and display pieces on it
         initializeBoard();
+
+        // Sort the pieces array
+        sortPiecesArray();
+
+        // Update the board with sorted pieces
+        updateBoard();
     }
 
     // Method to initialize the piecesArray with example values
     private void initializePiecesArray() {
-        // Create an array of 8 rows and 1 column (only for image paths)
-        piecesArray = new String[8][1];
+        // List of all PNG files except grid.png
+        String[] pieceImages = {
+            "square.png", "triangle.png", "circle.png", "star.png", 
+            "hexagon.png", "octagon.png", "pentagon.png", "diamond.png"
+        };
 
-        // Assign example pieces to the first two rows
-        piecesArray[0][0] = "square.png";piecesArray[0][1] = "1";    // Image for knight
-        piecesArray[1][0] = "triangle.png"; piecesArray[1][1]="3";
+        // Calculate the number of times each piece should be repeated
+        int piecesPerType = (SIZE * SIZE) / pieceImages.length;
 
-        // Fill the remaining rows with empty spaces (or placeholders)
-        for (int i = 2; i < piecesArray.length; i++) {
-            piecesArray[i][0] = "empty.png"; // Empty placeholder image
+        // Create an array to hold all the pieces
+        piecesArray = new String[SIZE * SIZE][1];
+
+        // Assign the piece images to the array
+        int index = 0;
+        for (String piece : pieceImages) {
+            for (int i = 0; i < piecesPerType; i++) {
+                piecesArray[index][0] = piece;
+                index++;
+            }
+        }
+
+        // Fill any remaining slots with empty spaces (if the grid size is not perfectly divisible)
+        while (index < piecesArray.length) {
+            piecesArray[index][0] = "empty.png"; // Empty placeholder image
+            index++;
+        }
+    }
+
+    // Method to shuffle the piecesArray
+    private void shufflePiecesArray() {
+        List<String> piecesList = new ArrayList<>();
+        for (int i = 0; i < piecesArray.length; i++) {
+            piecesList.add(piecesArray[i][0]);
+        }
+        Collections.shuffle(piecesList);
+        for (int i = 0; i < piecesArray.length; i++) {
+            piecesArray[i][0] = piecesList.get(i);
+        }
+    }
+
+    // Method to sort the piecesArray
+    private void sortPiecesArray() {
+        List<String> piecesList = new ArrayList<>();
+        for (int i = 0; i < piecesArray.length; i++) {
+            piecesList.add(piecesArray[i][0]);
+        }
+        Collections.sort(piecesList);
+        for (int i = 0; i < piecesArray.length; i++) {
+            piecesArray[i][0] = piecesList.get(i);
         }
     }
 
     // Method to initialize the board (add squares and assign pieces)
     private void initializeBoard() {
+        int pieceIndex = 0;
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
                 // Create each square as a JPanel with BorderLayout
@@ -48,8 +100,8 @@ public class GameBoard extends JFrame {
                 squares[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
                 // Check if there is a valid piece for this square
-                if (row < piecesArray.length) {
-                    String imagePath = piecesArray[row][0];       // Get the image path
+                if (pieceIndex < piecesArray.length) {
+                    String imagePath = piecesArray[pieceIndex][0]; // Get the image path
 
                     // Add piece image if valid (non-empty)
                     if (!imagePath.equals("empty.png")) {
@@ -58,10 +110,40 @@ public class GameBoard extends JFrame {
                         JLabel pieceLabel = new JLabel(new ImageIcon(scaledImage)); // Scaled image
                         squares[row][col].add(pieceLabel, BorderLayout.CENTER);
                     }
+                    pieceIndex++;
                 }
 
                 // Add the panel (square) to the GridLayout
                 add(squares[row][col]);
+            }
+        }
+    }
+
+    // Method to update the board with sorted pieces
+    private void updateBoard() {
+        int pieceIndex = 0;
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                // Remove all components from the square
+                squares[row][col].removeAll();
+
+                // Check if there is a valid piece for this square
+                if (pieceIndex < piecesArray.length) {
+                    String imagePath = piecesArray[pieceIndex][0]; // Get the image path
+
+                    // Add piece image if valid (non-empty)
+                    if (!imagePath.equals("empty.png")) {
+                        ImageIcon icon = new ImageIcon(imagePath); // Load the image
+                        Image scaledImage = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+                        JLabel pieceLabel = new JLabel(new ImageIcon(scaledImage)); // Scaled image
+                        squares[row][col].add(pieceLabel, BorderLayout.CENTER);
+                    }
+                    pieceIndex++;
+                }
+
+                // Revalidate and repaint the square to update the UI
+                squares[row][col].revalidate();
+                squares[row][col].repaint();
             }
         }
     }
